@@ -7,6 +7,11 @@ from pathlib import Path
 from textwrap import dedent
 
 import pandas as pd
+try:
+    import tabulate  # noqa: F401
+    HAVE_TABULATE = True
+except ImportError:
+    HAVE_TABULATE = False
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIG_DIR = REPO_ROOT / "artifacts" / "figures"
@@ -23,6 +28,13 @@ def ensure_fig_dir() -> bool:
 
 def read_text(path: Path) -> str:
     return path.read_text().strip()
+
+
+def df_to_table(df: pd.DataFrame) -> str:
+    if HAVE_TABULATE:
+        return df.to_markdown(index=False, floatfmt=".3f")
+    # Fallback simple table
+    return df.to_string(index=False)
 
 
 def write_markdown(path: Path, content: str) -> None:
@@ -44,7 +56,7 @@ def acoustic_section() -> str:
         )
 
     metrics_df = pd.read_csv(metrics_path)
-    metrics_md = metrics_df.to_markdown(index=False, floatfmt=".3f")
+    metrics_md = df_to_table(metrics_df)
     auc_data = json.loads(read_text(auc_path)) if auc_path.exists() else {}
     auc_summary = " | ".join(f"{k}: {v:.4f}" for k, v in auc_data.items()) if auc_data else ""
 
@@ -109,11 +121,12 @@ def makueni_section() -> str:
     report_txt = read_text(report_path)
     summary = json.loads(read_text(summary_path)) if summary_path.exists() else {}
     roc_auc = summary.get("roc_auc")
+    roc_text = f"{roc_auc:.4f}" if roc_auc is not None else "N/A"
     return dedent(
         f"""
         # Makueni Environmental & Hive Data Fusion
         - **Gradient Boosting ROC figure**: `{roc_path.name}`
-        - **ROC-AUC**: {roc_auc:.4f if roc_auc else 'N/A'}
+        - **ROC-AUC**: {roc_text}
         
         ## Classification Report
         ```
@@ -138,13 +151,15 @@ def sequence_section() -> str:
         metrics = json.loads(read_text(metrics_path)) if metrics_path.exists() else {}
         roc_auc = metrics.get("roc_auc")
         threshold = metrics.get("best_threshold")
+        roc_text = f"{roc_auc:.4f}" if roc_auc is not None else "N/A"
+        thresh_text = f"{threshold:.3f}" if threshold is not None else "N/A"
         blocks.append(
             dedent(
                 f"""
                 ### Sequence Variant: {variant}
                 - **PR/ROC figure**: `{fig_path.name}`
-                - **ROC-AUC**: {roc_auc:.4f if roc_auc else 'N/A'}
-                - **Best threshold**: {threshold:.3f if threshold else 'N/A'}
+                - **ROC-AUC**: {roc_text}
+                - **Best threshold**: {thresh_text}
                 
                 ```
                 {report_txt}
