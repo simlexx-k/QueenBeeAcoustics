@@ -1,9 +1,7 @@
 # System Integration & Deployment
+- Tuned acoustic model: `queenbee_final_tuned_model.keras`
+- Hive stress model: `content/main-data/hive_unified_model.pkl`
+- FastAPI service: `app/main.py`
+- Unified dataset scripts: `scripts/merge_hive_acoustic.py`, `scripts/train_unified_model.py`
 
-The tuned acoustic CNN (`queenbee_final_tuned_model.keras`) and the contextual hive-stress model (`hive_unified_model.pkl`) feed the BeeUnity FastAPI service (`app/main.py`). Acoustic predictions append to `content/main-data/acoustic_predictions.csv`, merged with weather/hive data via `scripts/merge_hive_acoustic.py`, and retrained with `scripts/train_unified_model.py`.
-
-FastAPI endpoints:
-- `GET /health` – confirms loaded models/classes.
-- `POST /predict` – accepts WAV uploads plus optional hive metadata, returning calibrated acoustic probabilities and (if available) the stress probability/label.
-
-Figures/tables referenced in the report should cite the generated assets under `/kaggle/working/figures/` to maintain reproducibility.
+Acoustic predictions feed the unified dataset, which in turn drives the contextual model surfaced via `/predict`. Embed references to the generated figures listed above when discussing the deployment pipeline.

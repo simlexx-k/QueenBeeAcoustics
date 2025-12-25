@@ -19,7 +19,7 @@ BeeUnity combines acoustic sensing and environmental analytics to help Makueni C
    - Build stratified train/val/test splits, compute class weights, and monitor a custom `SparseClassRecall` on the queen-absent class.
    - Train the baseline CNN, launch KerasTuner Hyperband to optimize filters/dense units/dropout, fine-tune the best trial, and save the `.keras` artifact.
    - Calibrate per-class thresholds using validation precision-recall curves and report argmax vs calibrated metrics (confusion matrix, macro ROC/PR AUC, class-wise precision/recall).
-3. The tuned model plus calibrated thresholds feed downstream scripts (`app/`, `scripts/train_unified_model.py`).
+3. The tuned model plus calibrated thresholds feed downstream scripts (`app/`, `scripts/train_unified_model.py`). Figures/metrics are emitted under `artifacts/figures/` for manuscript use.
 
 ### 2. Makueni Apiary Intelligence Pipeline
 1. Keep `ENABLE_REMOTE_CALLS=False` on Kaggle to load cached weather (`makueni_weather_2008_2025.csv`) and NDVI exports. When running locally with API access, flip the flag to regenerate fresh Open-Meteo/MODIS slices.
@@ -28,7 +28,7 @@ BeeUnity combines acoustic sensing and environmental analytics to help Makueni C
    - Engineer rolling statistics, calendar features, and imputed numeric matrices for modelling.
    - Train a class-weighted HistGradientBoostingClassifier and plot ROC + classification reports.
    - Slice sequential windows, oversample via `WeightedRandomSampler`, and train the PyTorch sequence model (set `SEQUENCE_MODEL_VARIANT` to `"cnn"` or `"cnn_gru"`). Logged AUC/PR curves + thresholded confusion matrices quantify stress recall.
-3. Exported metrics and model weights populate the BeeUnity report and act as inputs for the FastAPI unified predictor.
+3. Exported metrics and model weights populate the BeeUnity report and act as inputs for the FastAPI unified predictor. Tabular/sequence evaluation artifacts are written to `artifacts/figures/`.
 
 ## FastAPI Deployment
 
@@ -46,6 +46,14 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - `POST /predict` accepts a WAV upload plus optional hive metadata and returns acoustic class probabilities, calibrated label, and (if present) the hive stress probability/label from the contextual model.
 
 Acoustic predictions are appended to `content/main-data/acoustic_predictions.csv`. Use `scripts/merge_hive_acoustic.py` followed by `scripts/train_unified_model.py` to refresh the unified dataset + model before restarting the API.
+
+Generate report-ready markdown/figures anytime with:
+
+```bash
+python3 scripts/generate_report_markdown.py
+```
+
+The script ingests artifacts under `artifacts/figures/` and rewrites `docs/*.md` with the latest metrics/tables for direct inclusion in the manuscript.
 
 ## Reproducing Report Figures
 
