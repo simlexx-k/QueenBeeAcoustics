@@ -106,32 +106,32 @@ def acoustic_calibration_section() -> str:
 
 
 def makueni_section() -> str:
-    report_path = FIG_DIR / "tabular_hgb_classification_report.txt"
-    roc_path = FIG_DIR / "tabular_hgb_roc.png"
-    summary_path = FIG_DIR / "tabular_hgb_metrics.json"
+    yield_plot = FIG_DIR / "climate_yield_forecast.png"
+    yield_metrics = FIG_DIR / "climate_yield_metrics.json"
+    occ_plot = FIG_DIR / "climate_occupancy_forecast.png"
+    occ_metrics = FIG_DIR / "climate_occupancy_metrics.json"
 
-    if not report_path.exists():
+    if not yield_plot.exists() or not occ_plot.exists():
         return dedent(
             f"""
-            # Makueni Environmental & Hive Data Fusion
-            Run the tabular gradient boosting cell so `{report_path.name}`, `{roc_path.name}`, and `{summary_path.name}` exist before regenerating this markdown.
+            # Climate-Informed Yield & Occupancy Forecasts
+            Run the climate inference cells so `{yield_plot.name}` and `{occ_plot.name}` (and their metric JSONs) exist before regenerating this markdown.
             """
         )
 
-    report_txt = read_text(report_path)
-    summary = json.loads(read_text(summary_path)) if summary_path.exists() else {}
-    roc_auc = summary.get("roc_auc")
-    roc_text = f"{roc_auc:.4f}" if roc_auc is not None else "N/A"
+    yield_stats = json.loads(read_text(yield_metrics)) if yield_metrics.exists() else {}
+    occ_stats = json.loads(read_text(occ_metrics)) if occ_metrics.exists() else {}
+    mean_kg = yield_stats.get("mean_kg_per_day")
+    total_kg = yield_stats.get("total_kg")
+    mean_risk = occ_stats.get("mean_risk")
+
     return dedent(
         f"""
-        # Makueni Environmental & Hive Data Fusion
-        - **Gradient Boosting ROC figure**: `{roc_path.name}`
-        - **ROC-AUC**: {roc_text}
+        # Climate-Informed Yield & Occupancy Forecasts
+        - **Yield plot**: `{yield_plot.name}` | mean kg/day: {mean_kg:.3f if mean_kg is not None else 'N/A'} | total kg: {total_kg:.2f if total_kg is not None else 'N/A'}
+        - **Occupancy plot**: `{occ_plot.name}` | mean risk: {mean_risk:.3f if mean_risk is not None else 'N/A'}
         
-        ## Classification Report
-        ```
-        {report_txt}
-        ```
+        These outputs come from applying the Würzburg-pretrained models to the long-term Makueni climate/NDVI sequences.
         """
     )
 
