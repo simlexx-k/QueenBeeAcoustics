@@ -1,0 +1,12 @@
+services:
+  api:
+    build: .
+    image: queenbee-api
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./models:/app/models
+      - ./content:/app/content
+    environment:
+      - API_CORS_ORIGINS=${API_CORS_ORIGINS:-http://localhost:3000}
+    restart: unless-stopped

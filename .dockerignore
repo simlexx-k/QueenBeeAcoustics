@@ -1,0 +1,10 @@
+.git
+__pycache__/
+*.py[cod]
+*.ipynb_checkpoints
+.venv
+.mypy_cache/
+.pytest_cache/
+artifacts/
+figures/
+*.ipynb
