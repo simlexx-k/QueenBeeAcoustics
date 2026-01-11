@@ -37,8 +37,10 @@ ACOUSTIC_LOG_PATH = DATA_ROOT / "acoustic_predictions.csv"
 UNIFIED_MODEL_PATH = DATA_ROOT / "hive_unified_model.pkl"
 UNIFIED_DATASET_PARQUET = DATA_ROOT / "hive_weather_acoustic.parquet"
 UNIFIED_DATASET_CSV = DATA_ROOT / "hive_weather_acoustic.csv"
-WEATHER_NDVI_PATH = DATA_ROOT / "makueni_weather_ndvi_2008_2025.csv"
-YIELD_FORECAST_PATH = DATA_ROOT / "makueni_climate_yield_forecast.csv"
+KAGGLE_EXPORT_ROOT = APP_ROOT / "kaggle_exports" / "beeunity"
+KAGGLE_DATA_ROOT = KAGGLE_EXPORT_ROOT / "content" / "main-data"
+WEATHER_NDVI_FILE = "makueni_weather_ndvi_2008_2025.csv"
+YIELD_FORECAST_FILE = "makueni_climate_yield_forecast.csv"
 ACOUSTIC_LOG_FIELDS = [
     "created_at",
     "recorded_at",
@@ -277,13 +279,21 @@ def _safe_float(value: Optional[float]) -> Optional[float]:
 
 
 def _load_weather_ndvi_dataframe() -> pd.DataFrame:
-    if not WEATHER_NDVI_PATH.exists():
+    candidate_paths = [
+        DATA_ROOT / WEATHER_NDVI_FILE,
+        KAGGLE_DATA_ROOT / WEATHER_NDVI_FILE,
+    ]
+    dataset_path = next((path for path in candidate_paths if path.exists()), None)
+    if dataset_path is None:
         raise HTTPException(
             status_code=503,
-            detail="Weather and NDVI dataset not found. Regenerate it via the Kaggle notebook.",
+            detail=(
+                "Weather and NDVI dataset not found. Regenerate it via the Kaggle notebook "
+                f"or copy it into {DATA_ROOT} or {KAGGLE_DATA_ROOT}."
+            ),
         )
     try:
-        df = pd.read_csv(WEATHER_NDVI_PATH, parse_dates=["date"])
+        df = pd.read_csv(dataset_path, parse_dates=["date"])
     except Exception as exc:
         raise HTTPException(
             status_code=500, detail=f"Failed to load weather dataset: {exc}"
@@ -306,13 +316,21 @@ def _serialize_climate_records(df: pd.DataFrame) -> List[ClimateRecord]:
 
 
 def _load_yield_forecast_dataframe() -> pd.DataFrame:
-    if not YIELD_FORECAST_PATH.exists():
+    candidate_paths = [
+        DATA_ROOT / YIELD_FORECAST_FILE,
+        KAGGLE_DATA_ROOT / YIELD_FORECAST_FILE,
+    ]
+    forecast_path = next((path for path in candidate_paths if path.exists()), None)
+    if forecast_path is None:
         raise HTTPException(
             status_code=503,
-            detail="Yield forecast not found. Run the climate forecasting section of the notebook.",
+            detail=(
+                "Yield forecast not found. Run the climate forecasting section of the notebook "
+                f"or copy it into {DATA_ROOT} or {KAGGLE_DATA_ROOT}."
+            ),
         )
     try:
-        df = pd.read_csv(YIELD_FORECAST_PATH)
+        df = pd.read_csv(forecast_path)
     except Exception as exc:
         raise HTTPException(
             status_code=500, detail=f"Failed to load yield forecast: {exc}"

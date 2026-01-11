@@ -1,0 +1,4 @@
+[submodule "bee-unity"]
+	path = bee-unity
+	url = https://github.com/simlexx-k/bee-unity-app.git
+	branch = main
